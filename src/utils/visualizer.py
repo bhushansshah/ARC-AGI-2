@@ -1,18 +1,20 @@
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, Normalize
-from typing import List
+from typing import List, Union
+import numpy as np
 
+cmap = ListedColormap([
+        '#000', '#0074D9', '#FF4136', '#2ECC40', '#FFDC00',
+        '#AAAAAA', '#F012BE', '#FF851B', '#7FDBFF', '#870C25'
+    ])
 def plot_task(
     task: dict,
     title: str = None
 ) -> None:
     """
-    displays a task with training examples and test inputs, showing '?' for test outputs
+    displays a task with training examples and test and train inputs
     """
-    cmap = ListedColormap([
-        '#000', '#0074D9', '#FF4136', '#2ECC40', '#FFDC00',
-        '#AAAAAA', '#F012BE', '#FF851B', '#7FDBFF', '#870C25'
-    ])
+  
     norm = Normalize(vmin=0, vmax=9)
     args = {'cmap': cmap, 'norm': norm}
     
@@ -74,3 +76,33 @@ def plot_task(
         figure.suptitle(title, fontsize=20)
     plt.subplots_adjust(wspace=0.1, hspace=0.1)
     plt.show()
+
+
+def plot_figure(task: List[List[int]], title: str = None) -> None:
+    """
+    displays a single 2D list (grid)
+    """
+    height = len(task)
+    width = len(task[0]) if height > 0 else 0
+    
+    # Create figure with appropriate size
+    fig_size = (max(width * 0.5, 4), max(height * 0.5, 3))
+    figure, axes = plt.subplots(1, 1, figsize=fig_size)
+    
+    # Plot the grid
+    norm = Normalize(vmin=0, vmax=9)
+    args = {'cmap': cmap, 'norm': norm}
+    axes.imshow(task, **args)
+    
+    # Add title and labels
+    if title is not None:
+        axes.set_title(title, fontsize=16)
+    axes.set_title(f'Grid: {height}×{width}', fontsize=12)
+    
+    # Remove axis ticks
+    axes.set_xticks([])
+    axes.set_yticks([])
+    
+    plt.tight_layout()
+    plt.show()
+
