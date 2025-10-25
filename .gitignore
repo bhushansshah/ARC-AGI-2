@@ -1,9 +1,6 @@
 .DS_Store
-<<<<<<< HEAD
 __pycache__
 venv/
 *.pyc
 .env
-=======
-__pycache__
->>>>>>> 402e459 (Adding sample augmentation)
+wandb
