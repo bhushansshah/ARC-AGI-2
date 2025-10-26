@@ -95,7 +95,7 @@ def main():
         if not prompt_text:
             continue
         
-        if(i+1==3):
+        if(i+1==8):
             break
 
         print(f"[{time.strftime('%H:%M:%S')}] Generating for example {i+1}/{len(eval_prompts)}...")

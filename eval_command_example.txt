@@ -4,5 +4,5 @@ python -m tinker_finetuning.eval \
   --eval_solutions_path ./data/arc-agi-2025/evaluation/arc-agi_evaluation_solutions_fixed.json \
   --eval_prompts_path ./data/arc-agi-2025/prompts/arc-agi_evaluation_prompts.json \
   --output_path ./data/arc-agi-2025/evaluation/evaluation_predictions.json \
-  --max_tokens 27000\
-  --max_output_tokens 5000
+  --max_tokens 29000\
+  --max_output_tokens 3000

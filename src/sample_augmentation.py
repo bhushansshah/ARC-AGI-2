@@ -83,24 +83,17 @@ def process_and_augment_dataset(base_dir, challenges_filename, solutions_filenam
         augmented_challenge = {'train': [], 'test': challenge.get('test', [])}
         # check if the number of train samples is not zero or else dont change the challenge
         if len(challenge.get('train', [])) == 0:
-<<<<<<< HEAD
             print(f"Skipping challenge {challenge_id} as it has zero training samples.")
-=======
->>>>>>> 402e459 (Adding sample augmentation)
             augmented_dataset[challenge_id] = challenge
             continue
         # Check if the number of train samples is less than 5
         if len(challenge['train']) < 5:
             # Apply rotation augmentation until we reach 5 samples or exhaust rotation options
             augmented_challenge['train'] = augment_grid_rotation(challenge['train'], max_augments=5)
-<<<<<<< HEAD
         else:
             # Copy existing training samples
             augmented_challenge['train'] = [training_sample for training_sample in challenge['train']]
             
-=======
-
->>>>>>> 402e459 (Adding sample augmentation)
         if len(augmented_challenge['train']) < 7:
             # Apply color change augmentation until we reach 7 samples or exhaust color change options
             augmented_challenge['train'] = augment_grid_color(augmented_challenge['train'], max_augments=7)
@@ -112,10 +105,7 @@ def process_and_augment_dataset(base_dir, challenges_filename, solutions_filenam
         counter += 1
         if counter % 50 == 0:
             print(f"Processed {counter} challenges...")
-<<<<<<< HEAD
         print(f"Challenge {challenge_id} augmented from {len(challenge['train'])} to {len(augmented_challenge['train'])} training samples.")
-=======
->>>>>>> 402e459 (Adding sample augmentation)
         augmented_dataset[challenge_id] = augmented_challenge
     # Ensure save directory exists
     os.makedirs(save_base_dir, exist_ok=True)
