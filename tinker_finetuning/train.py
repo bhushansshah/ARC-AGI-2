@@ -15,10 +15,7 @@ from tinker import types
 
 dotenv.load_dotenv()
 
-try:
-    import wandb  # type: ignore
-except Exception:
-    wandb = None  # Optional dependency
+import wandb 
 
 
 @dataclass

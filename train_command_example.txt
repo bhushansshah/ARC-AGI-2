@@ -1,0 +1,15 @@
+python -m tinker_finetuning.train \
+  --model_name meta-llama/Llama-3.3-70B-Instruct \
+  --training_prompts_path data/arc-agi-2025/prompts/arc-agi_training_prompts.json \
+  --validation_prompts_path data/arc-agi-2025/prompts/arc-agi_validation_prompts.json \
+  --epochs 5 \
+  --batch_size 64 \
+  --learning_rate 5e-4 \
+  --max_seq_length 32500 \
+  --lora_rank 32 \
+  --checkpoint_dir ./tinker_checkpoints/arcagi_llama-3.3-70b-instruct \
+  --run_name arcagi_llama-3.3-70b-instruct \
+  --wandb \
+  --wandb_project arcagi \
+  --wandb_run_name arcagi_llama-3.3-70b-instruct \
+  --wandb_tags arc,agi,training
