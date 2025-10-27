@@ -1,0 +1,21 @@
+1. Problem augmentation for train challenge - 
+python3 -m src.problem_augmentation \                       
+  --base_dir data/arc-agi-2025/raw \
+  --challenges_filename arc-agi_training_challenges.json \  
+  --solutions_filename arc-agi_training_solutions.json \  
+  --save_base_dir data/arc-agi-2025/problem_augmented
+
+2. Process eval challenges - 
+python3 -m src.problem_augmentation \                       
+  --base_dir data/arc-agi-2025/raw \
+  --challenges_filename arc-agi_evaluation_challenges.json \
+  --solutions_filename arc-agi_evaluation_solutions.json \
+  --save_base_dir data/arc-agi-2025/processed_data_for_eval \
+--eval_dataset
+
+3. Process test challenges - 
+python3 -m src.problem_augmentation \                       
+  --base_dir data/arc-agi-2025/raw \
+  --challenges_filename arc-agi_test_challenges.json \
+  --save_base_dir data/arc-agi-2025/processed_data_for_eval \
+--test_dataset

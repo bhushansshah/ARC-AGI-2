@@ -30,6 +30,7 @@ def change_color(grid, color_map=None):
     Returns:
         np.ndarray: Grid with colors changed.
     """
+    grid = np.array(grid)
     unique_colors = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     if color_map is None:
         shuffled_colors = np.random.permutation(unique_colors)
