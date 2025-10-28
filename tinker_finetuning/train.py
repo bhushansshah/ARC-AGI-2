@@ -512,17 +512,18 @@ def main():
     training_prompts, validation_prompts = load_prompts(
         config.training_prompts_path, config.validation_prompts_path
     )
-
+    print(f'Loaded {len(training_prompts)} training prompts and {len(validation_prompts)} validation prompts.')
     # Filter by length
     new_training_prompts = filter_prompts_by_length(training_prompts, tokenizer, config.max_sequence_length)
     new_validation_prompts = filter_prompts_by_length(validation_prompts, tokenizer, config.max_sequence_length)
 
+    print(f'After length filtering: {len(new_training_prompts)} training prompts and {len(new_validation_prompts)} validation prompts.')
     # Convert to Datum
     processed_training_examples = [process_example(ex, tokenizer) for ex in new_training_prompts]
     processed_validation_examples = [process_example(ex, tokenizer) for ex in new_validation_prompts]
-
+    print(f'Processed {len(processed_training_examples)} training examples and {len(processed_validation_examples)} validation examples.')
     # Train
-    asyncio.run(train_async(config, training_client, processed_training_examples, processed_validation_examples))
+    asyncio.run(train_async(config, training_client, processed_training_examples, processed_validation_examples),debug=True)
 
 
 if __name__ == "__main__":
