@@ -1,8 +1,6 @@
-python -m tinker_finetuning.eval \
+python -m src.predict \
+  --dataset Test \
   --model_name meta-llama/Llama-3.3-70B-Instruct \
   --checkpoint_path "tinker://de38597d-e8fe-4142-adaa-c7ed34f90cba/sampler_weights/arcagi_llama-3.3-70b-instruct-000075" \
-  --eval_solutions_path ./data/arc-agi-2025/evaluation/arc-agi_evaluation_solutions_fixed.json \
-  --eval_prompts_path ./data/arc-agi-2025/prompts/arc-agi_evaluation_prompts.json \
-  --output_path ./data/arc-agi-2025/evaluation/evaluation_predictions.json \
-  --max_tokens 29000\
-  --max_output_tokens 3000
+  --max_tokens 28000\
+  --max_output_tokens 4000
