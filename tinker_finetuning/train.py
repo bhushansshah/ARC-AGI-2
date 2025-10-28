@@ -168,6 +168,7 @@ def compute_mean_nll(logprobs_list, weights_list):
         # ensure equal length
         if lp.shape != w.shape:
             min_len = min(lp.shape[0], w.shape[0])
+            print(f'[{now()}] Warning: logprobs shape {lp.shape} != weights shape {w.shape}, truncating to {min_len}')
             lp = lp[:min_len]
             w = w[:min_len]
 
@@ -280,6 +281,7 @@ def _accumulate_neglogprob_totals(logprobs_list, weights_list):
 
         if lp.shape != w.shape:
             min_len = min(lp.shape[0], w.shape[0])
+            print(f'[{now()}] Warning: validation logprobs shape {lp.shape} != weights shape {w.shape}, truncating to {min_len}')
             lp = lp[:min_len]
             w = w[:min_len]
 
@@ -426,8 +428,10 @@ async def train_async(
             train_nll = compute_mean_nll(train_logprobs, train_weights) if train_logprobs else None
 
             if train_nll is not None:
-                epoch_loss_accum += train_nll * len(batch)
-                epoch_items += len(batch)
+                # Compute total number of tokens (sum of weights) for correct averaging
+                batch_total_tokens = sum(np.array(w).sum() for w in train_weights)
+                epoch_loss_accum += train_nll * batch_total_tokens
+                epoch_items += batch_total_tokens
 
             # W&B logging for this step
             if config.wandb_enabled and wandb is not None and train_nll is not None:
@@ -463,7 +467,20 @@ async def train_async(
                         }, step=global_step)
                     except Exception as e:
                         print(f'[{now()}] Warning: wandb.log (checkpoint) failed: {e}')
-
+            # evaluat the validation dataset after every 50 steps
+            if global_step % 50 == 0:
+                val_start = time.time()
+                val_nll = await evaluate_nll(config, training_client, processed_validation_examples)
+                val_time = time.time() - val_start
+                print(f'[{now()}] Validation at step {global_step}: val_nll={val_nll} (val_time={val_time:.1f}s)')
+                if config.wandb_enabled and wandb is not None:
+                    try:
+                        wandb.log({
+                            'val/nll': val_nll,
+                            'val/time_sec': val_time,
+                        }, step=global_step)
+                    except Exception as e:
+                        print(f'[{now()}] Warning: wandb.log (validation) failed: {e}')
         # end epoch
         epoch_time = time.time() - epoch_start
         epoch_avg_loss = (epoch_loss_accum / epoch_items) if epoch_items > 0 else None
