@@ -427,9 +427,18 @@ async def train_async(
             train_weights = [d.loss_fn_inputs['weights'] for d in batch]
             train_nll = compute_mean_nll(train_logprobs, train_weights) if train_logprobs else None
 
+            
             if train_nll is not None:
                 # Compute total number of tokens (sum of weights) for correct averaging
-                batch_total_tokens = sum(np.array(w).sum() for w in train_weights)
+                batch_total_tokens = 0.0
+                for w in train_weights:
+                    if hasattr(w, 'tolist'):
+                        batch_total_tokens += np.array(w.tolist()).sum()
+                    elif hasattr(w, 'to_numpy'):
+                        batch_total_tokens += w.to_numpy().sum()
+                    else:
+                        batch_total_tokens += np.array(w).sum()
+                
                 epoch_loss_accum += train_nll * batch_total_tokens
                 epoch_items += batch_total_tokens
 
