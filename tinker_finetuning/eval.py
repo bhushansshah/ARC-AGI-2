@@ -115,7 +115,7 @@ def main():
 
             sampling_params = SamplingParams(
                 max_tokens=args.max_output_tokens,
-                temperature=0.5,
+                temperature=0.0,
                 stop=stop_sequences
             )
 
