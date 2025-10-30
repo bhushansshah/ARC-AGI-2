@@ -1,6 +1,60 @@
 python -m src.predict \
-  --dataset Test \
+  --dataset Evaluation \
+  --model_name meta-llama/Llama-3.2-1B \
+  --checkpoint_path "tinker://871a0cb2-aaee-434d-a502-2870c6b9635f/sampler_weights/arcagi_llama-3.2-1b-000400" \
+  --max_tokens 28000 \
+  --run_name arcagi-llama-3.2-1b \
+  --max_output_tokens 4000
+
+
+  python -m src.predict \
+  --dataset Evaluation \
+  --model_name meta-llama/Llama-3.2-1B \
+  --checkpoint_path "tinker://f38827af-a75f-48ef-b1db-cb55077e254c/sampler_weights/arcagi_Llama-3.2-1B_run2-000600" \
+  --max_tokens 28000 \
+  --run_name aarcagi_llama-3.2-1b_run2 \
+  --max_output_tokens 4000
+
+
+  python -m src.predict \
+  --dataset Evaluation \
+  --model_name meta-llama/Llama-3.2-1B \
+  --checkpoint_path "tinker://f8aa6deb-e8cd-4058-bb7e-a55d2ff990de/sampler_weights/arcagi_Llama-3.2-1B_lr1e5_rank8-001400" \
+  --max_tokens 28000 \
+  --run_name arcagi_llama-3.2-1b_lr1e5_rank8 \
+  --max_output_tokens 4000
+
+
+  python -m src.predict \
+  --dataset Evaluation \
+  --model_name meta-llama/Llama-3.2-1B \
+  --checkpoint_path "tinker://528f7610-b3cf-46b2-ba20-ac4693410800/sampler_weights/arcagi_Llama-3.2-1B_lr1e5_rank32-001400" \
+  --max_tokens 28000 \
+  --run_name arcagi_llama-3.2-1B_lr1e5_rank32 \
+  --max_output_tokens 4000
+
+
+  python -m src.predict \
+  --dataset Evaluation \
+  --model_name meta-llama/Llama-3.2-1B \
+  --checkpoint_path "tinker://6594c93b-55f1-452c-9dd5-93b97598be95/sampler_weights/arcagi_Llama-3.2-1B_lr1e6_rank8-001400" \
+  --max_tokens 28000 \
+  --run_name arcagi_llama-3.2-1b_lr1e6_rank8 \
+  --max_output_tokens 4000
+
+
+    python -m src.predict \
+  --dataset Evaluation \
+  --model_name Qwen/Qwen3-4B-Instruct-2507 \
+  --checkpoint_path "tinker://9c7ef171-8de5-42ec-9db0-a4f8eb3edb45/sampler_weights/arcagi_qwen3-4B-instruct-2507-000400" \
+  --max_tokens 28000 \
+  --run_name arcagi_qwen3-4b-instruct-2507 \
+  --max_output_tokens 4000
+
+      python -m src.predict \
+  --dataset Evaluation \
   --model_name meta-llama/Llama-3.3-70B-Instruct \
   --checkpoint_path "tinker://de38597d-e8fe-4142-adaa-c7ed34f90cba/sampler_weights/arcagi_llama-3.3-70b-instruct-000075" \
-  --max_tokens 28000\
+  --max_tokens 28000 \
+  --run_name arcagi_llama-3.3-70b-instruct \
   --max_output_tokens 4000

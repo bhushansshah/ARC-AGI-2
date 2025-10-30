@@ -10,16 +10,16 @@ import time
 dotenv.load_dotenv()
 
 
-def predict_evaluation(dataset_type, example_count=None, model_name=None, checkpoint_path=None, max_tokens=1000, max_output_tokens=1000):
+def predict_evaluation(dataset_type, example_count=None, model_name=None, checkpoint_path=None, max_tokens=1000, max_output_tokens=1000, run_name=None):
     """Generate predictions for Evaluation or Test dataset."""
     
     if dataset_type == "Evaluation":
         challenges_path = os.path.join("./data/arc-agi-2025/prompts/arc-agi_evaluation_prompts.json")
-        save_path = os.path.join("./data/arc-agi-2025/predictions/arc-agi_evaluation_predictions.json")
+        save_path = os.path.join("./data/arc-agi-2025/predictions/"+run_name+"_arc-agi_evaluation_predictions.json")
         solutions_path = os.path.join("./data/arc-agi-2025/processed_data_for_eval/arc-agi_evaluation_solutions.json")
     elif dataset_type == "Test":
         challenges_path = os.path.join("./data/arc-agi-2025/prompts/arc-agi_test_prompts.json")
-        save_path = os.path.join("./data/arc-agi-2025/predictions/arc-agi_test_predictions.json")
+        save_path = os.path.join("./data/arc-agi-2025/predictions/"+run_name+"_arc-agi_evaluation_predictions.json")
         solutions_path = None  # No solutions for test set
     else:
         raise ValueError("Invalid dataset type. Choose 'Evaluation' or 'Test'.")
@@ -61,7 +61,7 @@ def predict_evaluation(dataset_type, example_count=None, model_name=None, checkp
         if not prompt_text:
             print(f"Skipping example {i+1}: No prompt found")
             continue
-        
+
         print(f"[{time.strftime('%H:%M:%S')}] Generating for example {i+1}/{len(challenges)} (ID: {example_id})...")
 
         try:
@@ -81,7 +81,8 @@ def predict_evaluation(dataset_type, example_count=None, model_name=None, checkp
 
             sampling_params = SamplingParams(
                 max_tokens=max_output_tokens,
-                temperature=0.5,
+                temperature=0,
+                seed=42,
                 stop=stop_sequences
             )
 
@@ -120,7 +121,6 @@ def predict_evaluation(dataset_type, example_count=None, model_name=None, checkp
             "prompt": prompt_text,
             "prediction": parsed_json
         })
-
     # Save results
     output_dir = os.path.dirname(save_path)
     if output_dir:
@@ -133,7 +133,7 @@ def predict_evaluation(dataset_type, example_count=None, model_name=None, checkp
     print(f"Prediction complete! Generated {len(results)} predictions.")
 
     if dataset_type == "Test":
-        submissions_path = os.path.join("./data/arc-agi-2025/predictions/submissions.json")
+        submissions_path = os.path.join("./data/arc-agi-2025/predictions/",run_name,"_submissions.json")
         submissions = {}
         
         for res in results:
@@ -227,6 +227,8 @@ if __name__ == "__main__":
                         help='Number of test samples to predict (optional, defaults to all)')
     parser.add_argument('--model_name', type=str, required=True,
                         help='Base model name (e.g., Qwen/Qwen3-30B-A3B-Instruct-2507)')
+    parser.add_argument('--run_name', type=str, required=True,
+                        help='Name of the fine-tuning run to use for prediction')
     parser.add_argument('--checkpoint_path', type=str, required=True,
                         help='Path to fine-tuned LoRA checkpoint')
     parser.add_argument('--max_tokens', type=int, default=1000,
@@ -242,5 +244,6 @@ if __name__ == "__main__":
         model_name=args.model_name,
         checkpoint_path=args.checkpoint_path,
         max_tokens=args.max_tokens,
-        max_output_tokens=args.max_output_tokens
+        max_output_tokens=args.max_output_tokens,
+        run_name=args.run_name
     )
