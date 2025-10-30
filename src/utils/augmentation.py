@@ -66,3 +66,44 @@ def flip_vertical(grid):
         np.ndarray: Vertically flipped grid.
     """
     return np.flipud(grid)
+
+# --------------------------
+# 5. Padding Augmentation
+# --------------------------
+def padding_grid(training_sample_input, padding_top, padding_bottom, padding_left, padding_right, padding_value=0):
+    """
+    Pad the grid with specified padding on each side.
+    Args:
+        training_sample_input (np.ndarray): Input grid.
+        padding_top (int): Number of rows to pad on top.
+        padding_bottom (int): Number of rows to pad at bottom.
+        padding_left (int): Number of columns to pad on left.
+        padding_right (int): Number of columns to pad on right.
+        padding_value (int): Value to use for padding.
+    Returns:
+        np.ndarray: Padded grid.
+    """
+    padded_grid = np.pad(training_sample_input, 
+                         ((padding_top, padding_bottom), (padding_left, padding_right)), 
+                         mode='constant', constant_values=padding_value)
+    return padded_grid
+
+def horizontal_scale_grid(grid):
+    """
+    Scale the grid horizontally by a factor of 2.
+    Args:
+        grid (np.ndarray): Input grid.
+    Returns:
+        np.ndarray: Horizontally scaled grid.
+    """
+    return np.repeat(grid, 2, axis=1)
+
+def vertical_scale_grid(grid):
+    """
+    Scale the grid vertically by a factor of 2.
+    Args:
+        grid (np.ndarray): Input grid.
+    Returns:
+        np.ndarray: Vertically scaled grid.
+    """
+    return np.repeat(grid, 2, axis=0)
