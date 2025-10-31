@@ -3,7 +3,7 @@ python -m src.predict \
   --model_name meta-llama/Llama-3.2-1B \
   --checkpoint_path "tinker://871a0cb2-aaee-434d-a502-2870c6b9635f/sampler_weights/arcagi_llama-3.2-1b-000400" \
   --max_tokens 28000 \
-  --run_name arcagi-llama-3.2-1b \
+  --run_name arcagi-llama-3.2-1b_TTF_sampler_2 \
   --max_output_tokens 4000
 
 
@@ -37,9 +37,9 @@ python -m src.predict \
   python -m src.predict \
   --dataset Evaluation \
   --model_name meta-llama/Llama-3.2-1B \
-  --checkpoint_path "tinker://6594c93b-55f1-452c-9dd5-93b97598be95/sampler_weights/arcagi_Llama-3.2-1B_lr1e6_rank8-001400" \
+  --checkpoint_path "tinker://a11963e3-75bb-4064-b3c8-ac558ba76a5f/sampler_weights/0934a4d8-000005" \
   --max_tokens 28000 \
-  --run_name arcagi_llama-3.2-1b_lr1e6_rank8 \
+  --run_name arcagi_llama-3.2-1b_TFT_1 \
   --max_output_tokens 4000
 
 

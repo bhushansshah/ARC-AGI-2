@@ -119,8 +119,10 @@ def predict_evaluation(dataset_type, example_count=None, model_name=None, checkp
         results.append({
             "challenge_id": example_id,
             "prompt": prompt_text,
+            "raw" : prediction,
             "prediction": parsed_json
         })
+        break
     # Save results
     output_dir = os.path.dirname(save_path)
     if output_dir:

@@ -294,10 +294,10 @@ def prompt_evaluation(challenges_path,solutions_path,save_path,validation_path):
 if __name__ == "__main__":
     training_challenges_path = os.path.join("../data/arc-agi-2025/problem_augmented/arc-agi_training_challenges.json")
     training_solutions_path = os.path.join("../data/arc-agi-2025/problem_augmented/arc-agi_training_solutions.json")
-    evaluation_challenges_path = os.path.join("../data/arc-agi-2025/processed_data_for_eval/arc-agi_evaluation_challenges.json")
-    evaluation_solutions_path = os.path.join("../data/arc-agi-2025/processed_data_for_eval/arc-agi_evaluation_solutions.json")
-    test_challenges_path = os.path.join("../data/arc-agi-2025/processed_data_for_eval/arc-agi_test_challenges.json")    
-    prompt_training(training_challenges_path,training_solutions_path,save_path="../data/arc-agi-2025/prompts/arc-agi_training_prompts.json")
-    prompt_evaluation(evaluation_challenges_path,evaluation_solutions_path,save_path="../data/arc-agi-2025/prompts/arc-agi_evaluation_prompts.json",validation_path="../data/arc-agi-2025/prompts/arc-agi_validation_prompts.json")
-    prompt_test(test_challenges_path,save_path="../data/arc-agi-2025/prompts/arc-agi_test_prompts.json")
+    evaluation_challenges_path = os.path.join("../data/arc-agi-2025/test_time_finetuning/arc-agi_evaluation_challenges.json")
+    evaluation_solutions_path = os.path.join("../data/arc-agi-2025/test_time_finetuning/arc-agi_evaluation_solutions.json")
+    test_challenges_path = os.path.join("../data/arc-agi-2025/test_time_finetuning/arc-agi_test_challenges.json")    
+    # prompt_training(training_challenges_path,training_solutions_path,save_path="../data/arc-agi-2025/prompts/arc-agi_training_prompts.json")
+    prompt_evaluation(evaluation_challenges_path,evaluation_solutions_path,save_path="../data/arc-agi-2025/TFT_prompts/arc-agi_evaluation_prompts.json",validation_path="../data/arc-agi-2025/prompts/arc-agi_validation_prompts_2.json")
+    prompt_test(test_challenges_path,save_path="../data/arc-agi-2025/TFT_prompts/arc-agi_test_prompts.json")
 

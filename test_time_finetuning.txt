@@ -1,0 +1,6 @@
+python -m src.test_time_finetuning \
+  --evaluation_challenges_path data/arc-agi-2025/TFT_prompts/arc-agi_evaluation_prompts.json \
+  --solutions_path data/arc-agi-2025/test_time_finetuning/arc-agi_evaluation_solutions.json \
+  --load_checkpoint "tinker://f38827af-a75f-48ef-b1db-cb55077e254c/sampler_weights/arcagi_Llama-3.2-1B_run2-000400" \
+  --run_name arcagi_Llama-3.2-1b_run3_TTF \
+  --wandb 
