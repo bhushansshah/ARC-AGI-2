@@ -28,14 +28,9 @@ ARC_SYSTEM_PROMPT_TEMPLATE = """You are given initial example input-output grid 
    
      Your task:
     1. Study the given initial example input-output pairs carefully.
-    2. Some examples may be incorrect or noisy — identify the pattern that the *majority* of examples follow.
+    2. Identify the pattern that the examples follow.
     3. Infer the correct transformation rule that maps the input grid to the output grid.
     4. Apply this inferred transformation to the provided test input grid to produce the correct output grid.
-
-    Objectness: Objects persist and cannot appear or disappear without reason. Objects can interact or not depending on the circumstances.
-    Goal-directed: Objects can be animate or inanimate. Some objects are "agents" - they have intentions and they pursue goals.
-    Numbers & counting: Objects can be counted or sorted by their shape, appearance, or movement using basic mathematics like addition, subtraction, and comparison.
-    Basic geometry & topology: Objects can be shapes like rectangles, triangles, and circles which can be mirrored, rotated, translated, deformed, combined, repeated, etc. Differences in distances can be detected.
 """
 ARC_USER_PROMPT_TEMPLATE = """ Let's see if you can solve this simple ARC task. These are some input-output grid examples that define the task.
     {examples}
@@ -125,6 +120,7 @@ def prompt_training(training_challenges_path, training_solutions_path,save_path,
             prompts.append({
                 "challenge_id": challenge_id_new,
                 "prompt": prompt_string,
+                "output_start_ind": len(prompt_string) - len(solution_str),
                 "output": test_output
             })
             print(f"Generated prompt for challenge_id: {challenge_id_new}")
