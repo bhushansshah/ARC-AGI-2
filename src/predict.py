@@ -52,7 +52,7 @@ def predict_evaluation(dataset_type, example_count=None, model_name=None, checkp
 
     # Generate predictions
     results = []
-    stop_sequences = ["]\n]\n}\n```"]
+    stop_sequences = ["]]}"]
 
     for i, example in enumerate(challenges):
         prompt_text = example.get("prompt") or example.get("input")
@@ -107,15 +107,27 @@ def predict_evaluation(dataset_type, example_count=None, model_name=None, checkp
         if prediction:
             json_match = re.search(r"```json\s*(\{.*?\})\s*```", prediction, re.DOTALL)
             if json_match:
+                json_str = json_match.group(1)
+            else:
+                # Case 2: Raw JSON object or stringified JSON
+                json_match = re.search(r"(\{.*\})", prediction, re.DOTALL)
+                json_str = json_match.group(1) if json_match else None
+
+            if json_str:
                 try:
-                    parsed_json = json.loads(json_match.group(1))
-                    # If JSON contains "output", store only that
+                    parsed_json = json.loads(json_str)
+
+                    # Handle case where JSON is a string containing another JSON
+                    if isinstance(parsed_json, str):
+                        try:
+                            parsed_json = json.loads(parsed_json)
+                        except json.JSONDecodeError:
+                            pass
                     if isinstance(parsed_json, dict) and "output" in parsed_json:
                         parsed_json = parsed_json["output"]
                 except json.JSONDecodeError as e:
                     print(f"Warning: JSON parse failed for example {i+1} ({e})")
                     parsed_json = None
-
         results.append({
             "challenge_id": example_id,
             "prompt": prompt_text,

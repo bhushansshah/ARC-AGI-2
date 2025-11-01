@@ -26,7 +26,7 @@ class Config:
     prompts_path: str  # list of {challenge_id, prompt}
     solutions_path: str  # dict mapping challenge_id -> solution
     epochs: int = 5
-    batch_size: int = 64
+    batch_size: int = 1
     learning_rate: float = 5e-4
     max_sequence_length: int = 32500
     lora_rank: int = 32
@@ -45,7 +45,7 @@ class Config:
 
 def parse_args() -> Config:
     parser = argparse.ArgumentParser(description="Test-time fine-tuning for ARC-AGI challenges")
-    parser.add_argument("--model_name", type=str, default="Qwen/Qwen3-30B-A3B-Instruct-2507", help="Base model name")
+    parser.add_argument("--model_name", type=str, default="meta-llama/Llama-3.2-1B", help="Base model name")
     parser.add_argument("--prompts_path", type=str, required=True, help="Path to prompts JSON file (list of {challenge_id, prompt})")
     parser.add_argument("--solutions_path", type=str, required=True, help="Path to solutions JSON file (dict mapping challenge_id -> solution)")
     parser.add_argument("--epochs", type=int, default=5)
@@ -99,18 +99,9 @@ def build_clients_and_tokenizer(config: Config) -> Tuple[tinker.TrainingClient, 
     # Load checkpoint if specified
     if config.load_checkpoint_path:
         print(f'[{now()}] Loading checkpoint from: {config.load_checkpoint_path}')
-        try:
-            if hasattr(training_client, 'load_state'):
-                training_client.load_state(config.load_checkpoint_path)
-                print(f'[{now()}] Successfully loaded training state from checkpoint')
-            elif hasattr(training_client, 'load_weights'):
-                training_client.load_weights(config.load_checkpoint_path)
-                print(f'[{now()}] Successfully loaded weights from checkpoint')
-            else:
-                print(f'[{now()}] Warning: TrainingClient has no load_state or load_weights method')
-        except Exception as e:
-            print(f'[{now()}] Error loading checkpoint: {e}')
-            print(f'[{now()}] Continuing with base model...')
+        training_client.load_state(config.load_checkpoint_path)
+        print(f'[{now()}] Successfully loaded training state from checkpoint')
+        
 
     tokenizer = training_client.get_tokenizer()
     return training_client, tokenizer
@@ -165,126 +156,96 @@ def group_prompts_by_base_id(prompts: List[dict]) -> Dict[str, List[dict]]:
 
 def create_training_examples(prompt_entries: List[dict], solutions: Dict[str, Any]) -> List[dict]:
     """
-    Create training examples from prompt entries and solutions.
-    Each prompt_entry is expected to have:
-      - 'challenge_id'
-      - 'prompt' (string)
-    The function will pair the prompt with the solution from `solutions` if available.
-    Returns list of dicts with keys: 'prompt', 'output', 'challenge_id'
+    Create training examples for a base model fine-tuning setup.
+    Each example is structured such that:
+      - 'prompt': input text for the model
+      - 'output': string formatted as:
+            {
+                "output": [[...]]
+            }
+      - 'challenge_id': identifier
     """
     examples = []
+
     for entry in prompt_entries:
         cid = entry.get('challenge_id')
-        prompt_text = entry.get('prompt', "")
-        if prompt_text is None:
-            prompt_text = ""
+        prompt_text = entry.get('prompt', "") or ""
 
-        # If a solution exists for this challenge_id, use it. Otherwise use empty string.
+        # Retrieve solution by challenge_id or from entry
         solution = None
         if cid is not None:
             solution = solutions.get(cid)
-
-        # If solution is None, try entries providing explicit 'solution' key
         if solution is None and 'solution' in entry:
             solution = entry['solution']
 
-        # Convert solution to a string for model target (if not None)
-        output_text = ""
+        # Build model output string in strict JSON format
         if solution is not None:
-            # If solution is a Python object, serialize to JSON string so the model sees a canonical representation
-            try:
-                output_text = json.dumps(solution)
-            except Exception:
-                output_text = str(solution)
+            # Wrap solution inside {"output": [[...]]}
+            formatted_output = {"output": solution}
+        else:
+            formatted_output = {"output": []}
 
-        # Ensure prompt_text and output_text are strings
+        # Serialize cleanly (indentation optional for readability)
+        try:
+            output_text = json.dumps(formatted_output, ensure_ascii=False)
+        except Exception:
+            output_text = '{"output": []}'
+
+        # Ensure both fields are strings
         if not isinstance(prompt_text, str):
             prompt_text = str(prompt_text)
         if not isinstance(output_text, str):
             output_text = str(output_text)
 
         examples.append({
-            'prompt': prompt_text,
-            'output': output_text,
-            'challenge_id': cid
+            "prompt": prompt_text,
+            "output": output_text,
+            "challenge_id": cid
         })
 
     return examples
 
-
-def _safe_tokenizer_encode(tokenizer, text: str, add_special_tokens: bool = True) -> List[int]:
-    """
-    Tokenizer wrappers: different tokenizers accept different kwargs.
-    This will try a few variants.
-    Returns list of token ids (or raises exception if none work).
-    """
-    if text is None:
-        return []
-    # Try common signatures
-    try:
-        return tokenizer.encode(text, add_special_tokens=add_special_tokens)
-    except TypeError:
-        pass
-    try:
-        # some tokenizers use only 'add_special_tokens' named arg differently
-        return tokenizer.encode(text)
-    except Exception:
-        pass
-    # Try calling encode_plus or __call__
-    try:
-        enc = tokenizer(text, add_special_tokens=add_special_tokens)
-        # Try to extract input_ids
-        if isinstance(enc, dict) and 'input_ids' in enc:
-            return enc['input_ids']
-        # Some tokenizers return object with .input_ids
-        if hasattr(enc, 'input_ids'):
-            return enc.input_ids
-    except Exception:
-        pass
-    # As last resort, return empty
-    raise RuntimeError("tokenizer.encode failed for text (no supported signature).")
-
-
-def filter_prompts_by_length(prompts: List[dict], tokenizer, max_len: int) -> List[dict]:
-    out: List[dict] = []
+def filter_prompts_by_length(prompts: list[dict], tokenizer, max_len: int) -> list[dict]:
+    out: list[dict] = []
     for p in prompts:
-        try:
-            # combine prompt and output with a separator to be conservative
-            combined = (p.get("prompt", "") or "") + "\n" + (p.get("output", "") or "")
-            input_ids = _safe_tokenizer_encode(tokenizer, combined, add_special_tokens=True)
-            if len(input_ids) <= max_len:
-                out.append(p)
-        except Exception as e:
-            print(f'[{now()}] Warning: tokenizer failed for challenge {p.get("challenge_id")}: {e}. Skipping.')
-            continue
+        input_ids = tokenizer.encode(p["prompt"] + p["output"])
+        if len(input_ids) <= max_len:
+            out.append(p)
     return out
 
 
 def process_example(example: dict, tokenizer) -> types.Datum:
-    prompt = example.get('prompt', "") or ""
-    output = example.get('output', "") or ""
-
-    prompt_tokens = _safe_tokenizer_encode(tokenizer, prompt, add_special_tokens=True)
-    # For the completion, do not add special tokens so we only supervise the generated completion tokens
-    completion_tokens = _safe_tokenizer_encode(tokenizer, output, add_special_tokens=False)
-
-    # If completion is empty, we still want a valid training pair: treat as empty completion (no supervised tokens)
+    # Format the input with Input/Output template
+    # For most real use cases, you'll want to use a renderer / chat template,
+    # (see later docs) but here, we'll keep it simple.
+    prompt = example['prompt']
+    
+    prompt_tokens = tokenizer.encode(prompt, add_special_tokens=True)
     prompt_weights = [0] * len(prompt_tokens)
-    completion_weights = [1] * len(completion_tokens)
+    # Add a space before the output string, and finish with double newline
+    completion_tokens = tokenizer.encode(example['output'], add_special_tokens=False)
 
+    # store the input and output values in a test file
+    open("test_finetuning_input_output.txt", "a").write(f"PROMPT:\n{prompt}\nOUTPUT:\n{example['output']}\n\n")
+
+
+    completion_weights = [1] * len(completion_tokens)
     tokens = prompt_tokens + completion_tokens
     weights = prompt_weights + completion_weights
-
-    # If tokens length < 2, pad minimal to make input_tokens/target_tokens meaningful.
-    if len(tokens) < 2:
-        # unlikely but handle by duplicating a dummy token id 0
-        tokens = tokens + [0]
-        weights = weights + [1]
+    
+    # print the first  example['prompt'] and example['output'] for debugging
+    print("--- Example Prompt ---")
+    print(example['prompt'][:100])  # print first 1000 chars
+    print("--- Example Output ---")
+    print(example['output'][:100])  # print first 1000 chars
 
     input_tokens = tokens[:-1]
-    target_tokens = tokens[1:]
-    weights = weights[1:]  # weights align with target tokens
-
+    target_tokens = tokens[1:] # We're predicting the next token, so targets need to be shifted.
+    weights = weights[1:]
+ 
+    # A datum is a single training example for the loss function.
+    # It has model_input, which is the input sequence that'll be passed into the LLM,
+    # loss_fn_inputs, which is a dictionary of extra inputs used by the loss function.
     return types.Datum(
         model_input=types.ModelInput.from_ints(tokens=input_tokens),
         loss_fn_inputs=dict(weights=weights, target_tokens=target_tokens)
@@ -614,3 +575,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+ 

@@ -19,8 +19,11 @@ def prompt_training(training_challenges_path, training_solutions_path,save_path)
     # ============================================
 
     # Prompt template
-    ARC_PROMPT_TEMPLATE = """You are given initial example input-output grid pairs from the ARC (Abstraction and Reasoning Corpus) task.
-    Each grid is represented as a 2D array of integers ranging from 0 to 9. Each integer corresponds to a specific color:
+    ARC_PROMPT_TEMPLATE = """You are a helpful AI assistant. Your job is to solve tasks from the Abstraction and Reasoning Challenge (ARC).
+        Your job will be to understand the transformation between the input and the output and apply it to the last input grid given by the user. 
+    Each grid is represented as a 2D array of integers ranging from 0 to 9.
+    A 2D array can be any height or width between 1x1 and 30x30.
+    Each integer corresponds to a specific color:
 
     0 - Black  
     1 - Blue  
@@ -33,9 +36,13 @@ def prompt_training(training_challenges_path, training_solutions_path,save_path)
     8 - Light Blue  
     9 - Dark Red  
 
-    Each cell in the grid represents one colored square. The transformation from input to output follows a specific visual or logical pattern.
-
-    Your task:
+    The tasks from ARC are based on the following priors:
+    - Objectness: Objects persist and cannot appear or disappear without reason. Objects can interact or not depending on the circumstances.
+    - Goal-directed: Objects can be animate or inanimate. Some objects are "agents" - they have intentions and they pursue goals.
+    - Numbers & counting: Objects can be counted or sorted by their shape, appearance, or movement using basic mathematics like addition, subtraction, and comparison.
+    - Basic geometry & topology: Objects can be shapes like rectangles, triangles, and circles which can be mirrored, rotated, translated, deformed, combined, repeated, etc. Differences in distances can be detected.
+   
+     Your task:
     1. Study the given initial example input-output pairs carefully.
     2. Some examples may be incorrect or noisy — identify the pattern that the *majority* of examples follow.
     3. Infer the correct transformation rule that maps the input grid to the output grid.
