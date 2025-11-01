@@ -2,3 +2,6 @@ numpy
 matplotlib
 wandb
 python-dotenv
+transformers
+tinker
+torch
