@@ -43,7 +43,7 @@ def parse_args() -> Config:
     parser = argparse.ArgumentParser(description="Train LoRA model with Tinker on prompt/output pairs.")
     parser.add_argument("--model_name", type=str, default="Qwen/Qwen3-30B-A3B-Instruct-2507", help="Base model name for LoRA training")
     parser.add_argument("--training_prompts_path", type=str, default="../data/arc-agi-2025/prompts/arc-agi_training_prompts.json", help="Path to training prompts JSON")
-    parser.add_argument("--validation_prompts_path", type=str, default="../data/arc-agi-2025/prompts/arc-agi_validation_prompts.json", help="Path to validation prompts JSON")
+    parser.add_argument("--validation_prompts_path", type=str, default="../data/arc-agi-2025/prompts/arc-agi_evaluation_prompts.json", help="Path to validation prompts JSON")
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--learning_rate", type=float, default=5e-4)
@@ -103,7 +103,7 @@ def load_prompts(training_path: str, validation_path: str) -> tuple[list[dict], 
 def filter_prompts_by_length(prompts: list[dict], tokenizer, max_len: int) -> list[dict]:
     out: list[dict] = []
     for p in prompts:
-        input_ids = tokenizer.encode(p["prompt"] + p["output"])
+        input_ids = tokenizer.encode(p["prompt"])
         if len(input_ids) <= max_len:
             out.append(p)
     return out
@@ -112,12 +112,14 @@ def process_example(example: dict, tokenizer) -> types.Datum:
     # Format the input with Input/Output template
     # For most real use cases, you'll want to use a renderer / chat template,
     # (see later docs) but here, we'll keep it simple.
-    prompt = example['prompt']
+    ind = example["output_start_ind"]
+    prompt = example['prompt'][:ind]
+    output = example['prompt'][ind:]
     
     prompt_tokens = tokenizer.encode(prompt, add_special_tokens=True)
     prompt_weights = [0] * len(prompt_tokens)
     # Add a space before the output string, and finish with double newline
-    completion_tokens = tokenizer.encode(example['output'], add_special_tokens=False)
+    completion_tokens = tokenizer.encode(output, add_special_tokens=False)
     completion_weights = [1] * len(completion_tokens)
  
     tokens = prompt_tokens + completion_tokens
@@ -459,7 +461,7 @@ async def train_async(
                 avg_loss_so_far = (epoch_loss_accum / epoch_items) if epoch_items > 0 else None
                 print(f'[{now()}] Epoch {epoch} step {global_step}  avg_loss_so_far={avg_loss_so_far} lr={current_lr}')
 
-            if global_step % 200 == 0:
+            if global_step % 50 == 0:
                 local_path, train_remote_path, sampler_remote_path = save_checkpoint(
                     training_client,
                     config,
@@ -549,7 +551,7 @@ def main():
     processed_validation_examples = [process_example(ex, tokenizer) for ex in new_validation_prompts]
     print(f'Processed {len(processed_training_examples)} training examples and {len(processed_validation_examples)} validation examples.')
     # Train
-    asyncio.run(train_async(config, training_client, processed_training_examples, processed_validation_examples),debug=True)
+    asyncio.run(train_async(config, training_client, processed_training_examples, processed_validation_examples))
 
 
 if __name__ == "__main__":

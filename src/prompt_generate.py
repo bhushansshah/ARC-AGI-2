@@ -20,6 +20,17 @@ ARC_SYSTEM_PROMPT_TEMPLATE = """You are given initial example input-output grid 
     8 - Light Blue  
     9 - Dark Red  
 
+
+    Example Input format grid
+
+    ```grid
+    123
+    456
+    789
+    ```
+
+    Each single digit value in the grid corresponds to a particular cell in the input grid and associated with the color mentioned in the above list.
+
     The tasks from ARC are based on the following priors:
     - Objectness: Objects persist and cannot appear or disappear without reason. Objects can interact or not depending on the circumstances.
     - Goal-directed: Objects can be animate or inanimate. Some objects are "agents" - they have intentions and they pursue goals.
@@ -31,6 +42,22 @@ ARC_SYSTEM_PROMPT_TEMPLATE = """You are given initial example input-output grid 
     2. Identify the pattern that the examples follow.
     3. Infer the correct transformation rule that maps the input grid to the output grid.
     4. Apply this inferred transformation to the provided test input grid to produce the correct output grid.
+
+    The output SHOULD be in the below mentioned format
+    
+    ```grid
+    row1
+    row2
+    ...
+    ```
+    
+    example:
+    ```grid
+    123
+    456
+    789
+    ```
+
 """
 ARC_USER_PROMPT_TEMPLATE = """ Let's see if you can solve this simple ARC task. These are some input-output grid examples that define the task.
     {examples}
@@ -40,11 +67,94 @@ ARC_USER_PROMPT_TEMPLATE = """ Let's see if you can solve this simple ARC task. 
     {test_input}
 
     Generate the output grid that correctly applies the inferred transformation to this test input.
+    
+    The output SHOULD be in the below mentioned format
+    
+    ```grid
+    row1
+    row2
+    ...
+    ```
+    
+    example:
+    ```grid
+    123
+    456
+    789
+    ```
+    
+
 """
+
+ARC_COMPLETE_PROMPT_TEMPLATE =  """You are given initial example input-output grid pairs from the ARC (Abstraction and Reasoning Corpus) task.
+    Each grid is represented as a 2D array of integers ranging from 0 to 9. Each integer corresponds to a specific color:
+
+    0 - Black  
+    1 - Blue  
+    2 - Red  
+    3 - Green  
+    4 - Yellow  
+    5 - Gray  
+    6 - Magenta  
+    7 - Orange  
+    8 - Light Blue  
+    9 - Dark Red  
+
+
+    Example Input format grid
+
+    ```grid
+    123
+    456
+    789
+    ```
+
+    Each single digit value in the grid corresponds to a particular cell in the input grid and associated with the color mentioned in the above list.
+
+    The tasks from ARC are based on the following priors:
+    - Objectness: Objects persist and cannot appear or disappear without reason. Objects can interact or not depending on the circumstances.
+    - Goal-directed: Objects can be animate or inanimate. Some objects are "agents" - they have intentions and they pursue goals.
+    - Numbers & counting: Objects can be counted or sorted by their shape, appearance, or movement using basic mathematics like addition, subtraction, and comparison.
+    - Basic geometry & topology: Objects can be shapes like rectangles, triangles, and circles which can be mirrored, rotated, translated, deformed, combined, repeated, etc. Differences in distances can be detected.
+   
+     Your task:
+    1. Study the given initial example input-output pairs carefully.
+    2. Identify the pattern that the examples follow.
+    3. Infer the correct transformation rule that maps the input grid to the output grid.
+    4. Apply this inferred transformation to the provided test input grid to produce the correct output grid.
+
+    These are some input-output grid examples that define the task.
+    {examples}
+
+    Now, here is the test input grid:
+
+    {test_input}
+
+    Generate the output grid that correctly applies the inferred transformation to this test input.
+    
+    The output SHOULD be in the below mentioned format
+    
+    ```grid
+    row1
+    row2
+    ...
+    ```
+    
+    example:
+    ```grid
+    123
+    456
+    789
+    ```
+
+"""
+
+
+
 ARC_OUTPUT_PROMPT_TEMPLATE = """```grid
 {output_grid}```"""
 
-def prompt_training(training_challenges_path, training_solutions_path,save_path, model_name):
+def prompt_training(training_challenges_path, training_solutions_path,save_path, model_name,chat_mode=False):
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     with open(training_challenges_path, 'r') as f:
@@ -100,23 +210,33 @@ def prompt_training(training_challenges_path, training_solutions_path,save_path,
                     solution_str += str(ele)
                 solution_str += "\n"
             challenge_id_new = challenge_id
-            user_prompt = ARC_USER_PROMPT_TEMPLATE.format(
-                examples=train_examples_str,
-                test_input=test_input_str
-            )
-            output_prompt = ARC_OUTPUT_PROMPT_TEMPLATE.format(output_grid=solution_str)
-            messages = [
-                {"role": "system", "content": ARC_SYSTEM_PROMPT_TEMPLATE},
-                {"role": "user", "content": user_prompt},
-                {"role": "assistant", "content": output_prompt}
-            ]
-            prompt_string = tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=False
-            )
+
+
+            if(chat_mode):
+                user_prompt = ARC_USER_PROMPT_TEMPLATE.format(
+                    examples=train_examples_str,
+                    test_input=test_input_str
+                )
+                output_prompt = ARC_OUTPUT_PROMPT_TEMPLATE.format(output_grid=solution_str)
+                messages = [
+                    {"role": "system", "content": ARC_SYSTEM_PROMPT_TEMPLATE},
+                    {"role": "user", "content": user_prompt},
+                    {"role": "assistant", "content": output_prompt}
+                ]
+                prompt_string = tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=False,
+                    add_generation_prompt=False
+                )
+            else:
+                prompt_string = ARC_COMPLETE_PROMPT_TEMPLATE.format(
+                    examples=train_examples_str,
+                    test_input=test_input_str
+                )
+                output_prompt = ARC_OUTPUT_PROMPT_TEMPLATE.format(output_grid=solution_str)
+                prompt_string+=output_prompt
             if(len(test_inputs)>1):
-                challenge_id_new = f"{challenge_id}_test{i}"
+                    challenge_id_new = f"{challenge_id}_test{i}"
             prompts.append({
                 "challenge_id": challenge_id_new,
                 "prompt": prompt_string,
@@ -128,7 +248,7 @@ def prompt_training(training_challenges_path, training_solutions_path,save_path,
     with open(save_path, 'w') as f:
         json.dump(prompts, f, indent=4)
 
-def prompt_test(challenges_path,save_path, model_name):
+def prompt_test(challenges_path,save_path, model_name,chat_mode=False):
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -173,21 +293,28 @@ def prompt_test(challenges_path,save_path, model_name):
                 test_input_str += "\n"
             test_input_str += "```"
             challenge_id_new = challenge_id
-            user_prompt = ARC_USER_PROMPT_TEMPLATE.format(
-                examples=train_examples_str,
-                test_input=test_input_str
-            )
-            messages = [
-                {"role": "system", "content": ARC_SYSTEM_PROMPT_TEMPLATE},
-                {"role": "user", "content": user_prompt},
-            ]
-            prompt_string = tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True
-            )
+            if(chat_mode):
+                user_prompt = ARC_USER_PROMPT_TEMPLATE.format(
+                    examples=train_examples_str,
+                    test_input=test_input_str
+                )
+                messages = [
+                    {"role": "system", "content": ARC_SYSTEM_PROMPT_TEMPLATE},
+                    {"role": "user", "content": user_prompt},
+                ]
+                prompt_string = tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=False,
+                    add_generation_prompt=True
+                )
+                
+            else:
+                prompt_string = ARC_COMPLETE_PROMPT_TEMPLATE.format(
+                    examples=train_examples_str,
+                    test_input=test_input_str
+                )
             if(len(test_inputs)>1):
-                challenge_id_new = f"{challenge_id}_test{i}"
+                    challenge_id_new = f"{challenge_id}_test{i}"
             prompts.append({
                 "challenge_id": challenge_id_new,
                 "prompt": prompt_string,
@@ -204,10 +331,10 @@ if __name__ == "__main__":
     evaluation_challenges_path = os.path.join("../data/arc-agi-2025/test_time_finetuning/arc-agi_evaluation_challenges.json")
     evaluation_solutions_path = os.path.join("../data/arc-agi-2025/test_time_finetuning/arc-agi_evaluation_solutions.json")
     test_challenges_path = os.path.join("../data/arc-agi-2025/test_time_finetuning/arc-agi_test_challenges.json")    
-    model_name = "meta-llama/Llama-3.1-8B-Instruct"
+    model_name = "Qwen/Qwen3-4B-Instruct-2507"
     print("Generating training prompts...")
     prompt_training(training_challenges_path,training_solutions_path,save_path="../data/arc-agi-2025/prompts/arc-agi_training_prompts.json", model_name=model_name)
     print("Generating evaluation prompts...")
     prompt_training(evaluation_challenges_path,evaluation_solutions_path,save_path="../data/arc-agi-2025/prompts/arc-agi_evaluation_prompts.json", model_name=model_name)
     print("Generating test prompts...")
-    prompt_test(test_challenges_path,save_path="../data/arc-agi-2025/prompts/arc-agi_test_prompts.json", model_name=model_name)
+    prompt_test(test_challenges_path,save_path="../data/arc-agi-2025/prompts/arc-agi_test_prompts.json", model_name=model_name,chat_mode=False)
